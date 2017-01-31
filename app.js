@@ -118,12 +118,13 @@ const sendTop = schedule.scheduleJob('*/2 * * * * *', () => {
 
   calcTop(analyzeList, (err, data) => {
     console.log(err, data);
-    analyzeList = [];
-  });
 
-  openRoom.forEach((roomId) => {
-    // console.log(`send room ${roomId}, top`);
-    sio.sockets.in(roomId).emit('top', 'top data');
+    openRoom.forEach((roomId) => {
+      // console.log(`send room ${roomId}, top`);
+      sio.sockets.in(roomId).emit('top', data[roomId]);
+    });
+
+    analyzeList = [];
   });
 });
 
