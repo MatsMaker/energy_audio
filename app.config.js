@@ -6,5 +6,6 @@ module.exports = {
     port: 6379,
     sessPrefix: 'sess',
     userPrefix: 'user',
+    audioDataPrefix: 'audioData',
   },
 }

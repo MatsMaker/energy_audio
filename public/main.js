@@ -17,13 +17,13 @@ socket.on('connect', () => {
       console.log('top', data);
     });
 
-    sendData = setInterval(function () {
-      console.log('send audio data');
+    sendData = setInterval(() => {
+      // console.log('send audio data');
       socket.emit('audioData', {
         user: user,
         audioData: audioData.get(['energy'])
       });
-    }, 10);
+    }, 100);
 
   });
 });

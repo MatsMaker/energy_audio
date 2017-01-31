@@ -78,7 +78,38 @@ app.get('/logout', (req, res, next) => {
   res.redirect('/');
 });
 
-const openRoom = [1,2];
+
+
+let openRoom = [1,2];
+let analyzeList = [];
+
+const calcTop = (analyzeList, cb) => {
+  function genRequest(requestData) {
+    return new Promise((resolve, reject) => {
+      redisClient.hgetall(requestData.key, (err, data) => {
+        if(err){
+          reject(err);
+        }else{
+          resolve({
+            user: requestData.user,
+            room: requestData.user.room,
+            timeshtamp: requestData.timeshtamp,
+            data: data
+          });
+        }
+      });
+    });
+  };
+
+  const requestList = analyzeList.map(requestData => genRequest(requestData));
+  Promise.all(requestList)
+  .then(result => {
+    cb(null, result);
+  }).catch(err => {
+    cb(err, null);
+  })
+};
+
 sio.sockets.on('connection', (socket) => {
   //socket.request.session
   console.log(`a user connected`);
@@ -89,7 +120,13 @@ sio.sockets.on('connection', (socket) => {
 
   socket.on('audioData', (data, cb) => {
     const timeshtamp = new Date().getTime();
-    redisClient.hmset(`audioData:${data.user.id}:${timeshtamp}`, data.audioData);
+    const keyData = `${config.redis.audioDataPrefix}:${data.user.id}:${timeshtamp}`;
+    analyzeList.push({
+      user: data.user,
+      timeshtamp: timeshtamp,
+      key: keyData
+    });
+    redisClient.hmset(keyData, data.audioData);
   });
 
   socket.on('room', (result) => {
@@ -103,8 +140,14 @@ sio.sockets.on('connection', (socket) => {
 });
 
 const sendTop = schedule.scheduleJob('*/2 * * * * *', () => {
+
+  calcTop(analyzeList, (err, data) => {
+    console.log(err, data);
+    analyzeList = [];
+  });
+
   openRoom.forEach((roomId) => {
-    console.log(`send room ${roomId}, top`);
+    // console.log(`send room ${roomId}, top`);
     sio.sockets.in(roomId).emit('top', 'top data');
   });
 });
