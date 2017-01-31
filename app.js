@@ -83,32 +83,7 @@ app.get('/logout', (req, res, next) => {
 let openRoom = [1,2];
 let analyzeList = [];
 
-const calcTop = (analyzeList, cb) => {
-  function genRequest(requestData) {
-    return new Promise((resolve, reject) => {
-      redisClient.hgetall(requestData.key, (err, data) => {
-        if(err){
-          reject(err);
-        }else{
-          resolve({
-            user: requestData.user,
-            room: requestData.user.room,
-            timeshtamp: requestData.timeshtamp,
-            data: data
-          });
-        }
-      });
-    });
-  };
-
-  const requestList = analyzeList.map(requestData => genRequest(requestData));
-  Promise.all(requestList)
-  .then(result => {
-    cb(null, result);
-  }).catch(err => {
-    cb(err, null);
-  })
-};
+const calcTop = require('./getTop')(redisClient);
 
 sio.sockets.on('connection', (socket) => {
   //socket.request.session
