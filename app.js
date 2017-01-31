@@ -80,7 +80,7 @@ app.get('/logout', (req, res, next) => {
 
 
 
-let openRoom = [1,2];
+let openRoom = [0,1];
 let analyzeList = [];
 
 const calcTop = require('./getTop')(redisClient);
