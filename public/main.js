@@ -23,7 +23,7 @@ socket.on('connect', () => {
         user: user,
         audioData: audioData.get(['energy'])
       });
-    }, 1000);
+    }, 10);
 
   });
 });

@@ -2,54 +2,69 @@ module.exports = (redisClient) => {
 
   return (analyzeList, cb) => {
     const requestList = analyzeList.map(requestData => genRequest(requestData));
+    const timestamp = new Date().getTime();
 
     Promise.all(requestList)
     .then(result => {
-      cb(null, findTop(result));
+      cb(null, findTop(result, timestamp));
     }).catch(err => {
       cb(err, null);
     });
 
   };
 
-  function findTop(resultData) {
-    const byRooms = {};
+  function findTop(resultData, timestamp) {
+    const byRooms = sumUserEnergy(resultData);
+    const resultRoom = convertDataToArray(byRooms, usersByRoomToArray, timestamp);
 
-    // for (var i = 0; i < resultData.length; i++) {
-    //   let analizData = resultData[i];
-    //   if(!byRooms.hasOwnProperty(analizData.room)) {
-    //     byRooms[analizData.room] = {};
-    //   }
-    //   if(!byRooms[analizData.room].hasOwnProperty(analizData.user.id)) {
-    //     byRooms[analizData.room][analizData.user.id] = {
-    //       userId: analizData.user.id,
-    //       energy: 0
-    //     }
-    //   }
-    //   byRooms[analizData.room][analizData.user.id].energy += byRooms[analizData.room][analizData.user.id].energy;
-    // }
-    resultData.forEach(analizData => {
-      if(!byRooms.hasOwnProperty(analizData.room)) {
-        byRooms[analizData.room] = {};
-      }
-      if(!byRooms[analizData.room].hasOwnProperty(analizData.user.id)) {
-        byRooms[analizData.room][analizData.user.id] = {
-          userId: analizData.user.id,
-          energy: 0
+    function sumUserEnergy(resultData) {
+      const byRooms = {};
+      resultData.forEach(analizData => {
+        let roomKey = `${analizData.room}`; //roomKey;
+        if(!byRooms.hasOwnProperty(roomKey)) {
+          byRooms[roomKey] = {};
+        }
+        let userKey = `user_${analizData.user.id}`;
+        if(!byRooms[roomKey].hasOwnProperty(userKey)) {
+          byRooms[roomKey][userKey] = {
+          id: analizData.user.id,
+            energy: 0,
+          }
+        }
+        byRooms[roomKey][userKey].energy += parseFloat(analizData.data.energy);
+      });
+      return byRooms;
+    }
+
+    function usersByRoomToArray(roomData) {
+      const users = [];
+      for (var userKey in roomData) {
+        if (roomData.hasOwnProperty(userKey)) {
+          users.push(roomData[userKey]);
         }
       }
-      byRooms[analizData.room][analizData.user.id].energy += parseFloat(analizData.data.energy);
-    });
+      users.sort((a, b) => {
+        return b.energy - a.energy;
+      })
+      return users;
+    }
 
-    // for (var roomId in byRooms) {
-    //   if (object.hasOwnProperty(roomId)) {
-    //     byRooms[roomId].sort((a, b) => {
-    //       return a - b;
-    //     });
-    //   }
-    // }
+    function convertDataToArray(byRooms, fnUsersByRoomToArray, timestamp) {
+      const resultRoom = [];
+      for (let roomKey in byRooms) {
+        if (byRooms.hasOwnProperty(roomKey)) {
+          const userByRoom = fnUsersByRoomToArray(byRooms[roomKey])
+          resultRoom.push({
+            id: roomKey,
+            timestamp: timestamp,
+            users: userByRoom
+          });
+        }
+      }
+      return resultRoom;
+    }
 
-    return byRooms;
+    return resultRoom;
   };
 
   function genRequest(requestData) {

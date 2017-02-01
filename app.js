@@ -109,7 +109,7 @@ sio.sockets.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`${socket.request.session.user.name} user disconnected`);
+    console.log(`a user disconnected`);
   });
 
 });
@@ -117,11 +117,19 @@ sio.sockets.on('connection', (socket) => {
 const sendTop = schedule.scheduleJob('*/2 * * * * *', () => {
 
   calcTop(analyzeList, (err, data) => {
-    console.log(err, data);
-
     openRoom.forEach((roomId) => {
       // console.log(`send room ${roomId}, top`);
-      sio.sockets.in(roomId).emit('top', data[roomId]);
+      const roomTop = data.find((room) => {
+        return room.id == roomId
+      });
+      if(roomTop){
+        const topUser = roomTop.users.slice(0, config.top);
+        sio.sockets.in(roomId).emit('top', {
+          timestamp: roomTop.timestamp,
+          roomId: roomTop.id,
+          users: topUser
+        });
+      }
     });
 
     analyzeList = [];
