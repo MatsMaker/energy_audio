@@ -13,6 +13,7 @@
 - move to <a href="http://localhost:8080">http://localhost:8080</a> (default)
 - auth
 - open browser debugger(chrome F12) and see top stats on console
+- logout <a href="http://localhost:8080/logout">http://localhost:8080/logout</a>
 
 <h2>Description</h2>
 Getting top users by autio energy use microphone
